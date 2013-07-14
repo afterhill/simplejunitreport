@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="test">
+	<property name="ant.project.name" value="Ant Junit Report"/>
+	<property name="junit.results.dir" location="build/report"/>
+
+	<property name="debuglevel" value="source,lines,vars"/>
+	<path id="maven.libraryclasspath">
+		<pathelement location="../../maven_repo/org/apache/ant/ant-junit/1.9.1/ant-junit-1.9.1.jar" />
+		<pathelement location="../../maven_repo/org/apache/ant/ant/1.9.1/ant-1.9.1.jar" />
+		<pathelement location="../../maven_repo/org/apache/ant/ant-launcher/1.9.1/ant-launcher-1.9.1.jar" />
+		<pathelement location="../../maven_repo/junit/junit/4.11/junit-4.11.jar" />
+		<pathelement location="../../maven_repo/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar" />
+		<pathelement location="../../maven_repo/com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.jar" />
+		<pathelement location="../../maven_repo/commons-codec/commons-codec/1.2/commons-codec-1.2.jar" />
+	</path>
+	<path id="antreport.classpath">
+		<pathelement location="build/test-classes" />
+		<pathelement location="build/classes" />
+		<path refid="maven.libraryclasspath" />
+	</path>
+	<target name="init" depends="clean">
+		<mkdir dir="build/test-classes" />
+		<mkdir dir="build/classes" />
+		<mkdir dir="build/report" />
+		<mkdir dir="build/report/html"/>
+		<copy includeemptydirs="false" todir="build/test-classes">
+			<fileset dir="src/test/java">
+				<exclude name="**/*.launch" />
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+		<copy includeemptydirs="false" todir="build/classes">
+			<fileset dir="src/main/java">
+				<exclude name="**/*.launch" />
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+		<copy includeemptydirs="false" todir="build/classes">
+			<fileset dir="src/main/resources">
+				<exclude name="**/*.launch" />
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+	</target>
+	<target name="clean">
+		<delete dir="build/test-classes" />
+		<delete dir="build/classes" />
+		<delete dir="build" />
+	</target>
+	<target name="compile" depends="init">
+		<echo message="${ant.project.name}: ${ant.file}" />
+		<javac debug="true" debuglevel="${debuglevel}" destdir="build/test-classes" includeantruntime="false">
+			<src path="src/test/java" />
+			<classpath refid="antreport.classpath" />
+			<!--<compilerarg value="-Xlint" />-->
+		</javac>
+		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" includeantruntime="false">
+			<src path="src/main/java" />
+			<src path="src/main/resources" />
+			<classpath refid="antreport.classpath" />
+			<!--<compilerarg value="-Xlint" />-->
+		</javac>
+	</target>
+	<target name="jar">
+		<mkdir dir="build/jar" />
+		<jar destfile="build/jar/HelloWorld.jar" basedir="build/classes">
+			<mainfest>
+				<attribute name="Main-Class" value="oata.HelloWorld" />
+			</mainfest>
+		</jar>
+	</target>
+	<target name="run">
+		<java jar="/build/jar/HelloWorld.jar" fork="true" />
+	</target>
+	<target name="test" depends="compile">
+		<taskdef resource="simple.junit.task" classpathref="antreport.classpath" />
+		<junit forkmode="perBatch" printsummary="yes" haltonfailure="no" haltonerror="no">
+			<classpath refid="antreport.classpath" />
+			<formatter classname="simple.junit.reporter.ScreenshotOnFailureResultFormatter" extension=".xml" />
+			<batchtest fork="yes" todir="build/report">
+				<fileset dir="build/test-classes" includes="**/*Test*.class" />
+			</batchtest>
+		</junit>
+		
+		<simplereport todir="build/report/html">
+			<classpath refid="antreport.classpath" />
+			<fileset dir="build/report">
+				<include name="TEST-*.xml" />
+			</fileset>
+			<report format="frames" todir="build/report/html" />
+		</simplereport>
+		
+	</target>
+</project>
